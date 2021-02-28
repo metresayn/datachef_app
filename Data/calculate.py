@@ -8,13 +8,16 @@ from functools import reduce
 from pyspark.sql.functions import countDistinct
 from pyspark.sql.functions import col
 import os
+import pymongo
+import json
 
 file_path = "csv/"
+duplicate_file_path = 'duplicates/'
 spark = SparkSession.builder.appName('Banner_loader').getOrCreate()
 spark.conf.set("spark.sql.shuffle.partitions", 5)
 
 
-def load_csvs(os_path):
+def load_csvs(os_path, duplicate_file_path):
     dataframe_list = []
     csv_paths = [f for f in os.listdir(os_path) if not f.startswith('.')]
     for folder in csv_paths:
@@ -30,19 +33,19 @@ def load_csvs(os_path):
             idf.groupBy(idf.columns).agg((
                 f.count("*")>1).cast("int").alias("Duplicate_indicator")), on=idf.columns, how="inner")
         df1 = val_idf.where("Duplicate_indicator > 0")
-        df1.toPandas().to_csv('duplicates/'+folder+'/'+'impressions_duplicates'+'_'+folder+'.csv')
+        df1.toPandas().to_csv(duplicate_file_path+folder+'/'+'impressions_duplicates'+'_'+folder+'.csv')
         
         val_cldf = cldf.join(
             cldf.groupBy(cldf.columns).agg((
                 f.count("*")>1).cast("int").alias("Duplicate_indicator")), on=cldf.columns, how="inner")
         df2 = val_cldf.where("Duplicate_indicator > 0")
-        df2.toPandas().to_csv('duplicates/'+folder+'/'+'clicks_duplicates'+'_'+folder+'.csv')
+        df2.toPandas().to_csv(duplicate_file_path+folder+'/'+'clicks_duplicates'+'_'+folder+'.csv')
         
         val_codf = codf.join(
             codf.groupBy(codf.columns).agg((
                 f.count("*")>1).cast("int").alias("Duplicate_indicator")), on=codf.columns, how="inner")
         df3 = val_codf.where("Duplicate_indicator > 0")
-        df3.toPandas().to_csv('duplicates/'+folder+'/'+'conversion_duplicates'+'_'+folder+'.csv')
+        df3.toPandas().to_csv(duplicate_file_path+folder+'/'+'conversion_duplicates'+'_'+folder+'.csv')
         
         ##drop_duplicates
         cldf = cldf.dropDuplicates()
@@ -94,12 +97,20 @@ def create_banner_campaign_dataframe(merged_df, toq):
     return resultant_df
 
 def main():
-	merged_df = load_csvs(file_path)
-	df_list = []
-	for time_quarter in range(1,5):
-		df_list.append(create_banner_campaign_dataframe(merged_df, str(time_quarter)))
-	resultant_df = pd.concat(df_list)
-	resultant_df.to_json('Load_in_database/results.json',orient ='records')
+    merged_df = load_csvs(file_path, duplicate_file_path)
+    df_list = []
+    for time_quarter in range(1,5):
+        df_list.append(create_banner_campaign_dataframe(merged_df, str(time_quarter)))
+    resultant_df = pd.concat(df_list)
+    resultant_df.to_json('Load_in_database/results.json',orient ='records')
+    
+    connection = pymongo.MongoClient()
+    db = connection['user_data']
+    collection_banners = db['banners']
+
+    with open('Load_in_database/results.json') as f:
+        file_data = json.load(f)
+    collection_banners.insert(file_data)
 
 if __name__ == "__main__":
     main()
