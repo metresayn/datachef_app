@@ -12,9 +12,19 @@
 </head>
 
 <body>
-  <h1 style="color: blue">Index</h1>
-  <p>This is an HTML file served up by Flask</p>
-  <img src="{{ url_for('static', filename=image_name) }}" alt="">
+  {% if results %}
+        <table>
+            <tbody>
+            {% for img_name in results %}
+                <tr>
+                    <td><img src="{{url_for('static', filename=img_name)}}" alt={{ img_name }} ></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        No results :(
+    {% endif %}
 </body>
 
 </html>
