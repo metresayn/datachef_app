@@ -14,6 +14,10 @@ def load_image_from_database(req_time, campaign_id):
 	collection_banners = db['banners']
 	doc = list(collection_banners.find({'campaign_id':str(campaign_id),'time_quarter':str(req_time)}))
 	return doc[0]['list_of_banners']
+	
+@app.route("/")
+def home_func():
+    return render_template("head.html")
 
 @app.route("/campaign/<campaign_id>")
 def index(campaign_id):
