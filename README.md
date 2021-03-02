@@ -28,3 +28,19 @@ Home assignment
 ## Test files
 1) Testcases are written specific to testing the python script in Data/tests/.
 2) The locustfile.py can be used to run the load testing of the app. Loading testing results are present in folder Load_test_data/.
+
+## Functional Requirements check
+- [x] To avoid saturation for visitors, we believe that the top banners being served, should not follow a fixed order based on its performance; but they should appear in a random sequence.
+- [ ] You should also avoid having a banner served twice in a row for a unique visitor.
+    - This is not done. But there is a certain randomness for every visitor. So a unique visitor will not rendered with the same order of banners.
+- [x] And finally, the 4 sets of CSV's represent the 4 quarters of an hour. So when I visit the website during 00m-15m, I want to see banners being served based on the statistics of the first dataset, and if I visit your site during 16m-30m, I want to see the banners being served based on the second dataset, so on so forth.
+
+
+## Non-Functional Requirements Check
+- [x] Your application should serve at least 5000 requests per minute. The script and results of the stress test should be provided.
+- [x] Loading data from CSV files, make sure you have de-duplication logic in place. If I add a duplicate csv file or part of content is duplicate of previous files, then gracefully reject the duplicate but log it somewhere.
+   - De-duplication logic is in place at csv level. So if someone adds duplicate entries in a csv it will be filtered and logged in a folder duplicates/. But there      is no logic in place for duplicate folders with similar content.
+- [x]  Code should be tested (be it in unittest or another library) both for green path scenario and alternative scenarios like duplicate csv, etc.
+   - Unit Testing is not done on python script, not on flask app.
+- [x] Deploy to AWS (deployment automation is not needed but will be a big plus if you do!).
+- [x] Code must be pushed to a public Github or CodeCommit repo (temporarily). 
